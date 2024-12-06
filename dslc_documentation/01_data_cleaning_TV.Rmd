@@ -1,0 +1,116 @@
+---
+title: "Combining Passive Sensing and Self-Reported Symptoms with Network Analysis to Predict Suicidal Ideation in Medical Residents"
+output: github_document
+---
+## Setup
+```{r setup, include=FALSE, echo=FALSE}
+# Set working directory
+# Please update this to your directory as needed
+dir <- "/Users/thaliaviranda/Documents/GitHub/PassiveSensing-Symptoms-NetworkAnalysis"
+setwd(dir)
+
+# load packages
+# Define a vector of package names
+packages <- c("dplyr", "tidyverse", "ggplot2", "rstatix", "tableone", "lsr")  
+for (pkg in packages) {
+if (!require(pkg, character.only = TRUE)){
+    install.packages(pkg, dependencies = TRUE)
+    library(pkg, character.only = TRUE)
+    }
+}
+
+#====================================================================
+# Load Data
+#====================================================================
+# self report: 2018 and 20919 baseline 
+selfreport_2018_2019 <- read.csv(paste0(dir, "/data/", "IHSdata_20182019_03062024.csv"), header = TRUE)
+
+# 2018: sensor (activity and sleep), self-report: baseline, Q1Q2, Q3, Q4
+c2018_step_sleep_mood_daily_BL <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_BL.csv"), header = TRUE)
+c2018_step_sleep_mood_daily_Q1Q2 <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_Q1Q2.csv"), header = TRUE)
+c2018_step_sleep_mood_daily_Q3 <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_Q3.csv"), header = TRUE)
+c2018_step_sleep_mood_daily_Q4 <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_Q4.csv"), header = TRUE)
+
+
+# 2019: sensor (activity and sleep), self-report: baseline, Q1Q2, Q3, Q4
+c2019_step_sleep_mood_daily_BLQ1 <- read.csv(paste0(dir, "/data/2019/", "Step_sleep_mood_daily_2019_BLQ1.csv"), header = TRUE)
+c2019_step_sleep_mood_daily_Q2 <- read.csv(paste0(dir, "/data/2019/", "Step_sleep_mood_daily_2019_Q2.csv"), header = TRUE)
+c2019_step_sleep_mood_daily_Q3 <- read.csv(paste0(dir, "/data/2019/", "Step_sleep_mood_daily_2019_Q3.csv"), header = TRUE)
+c2019_step_sleep_mood_daily_Q4 <- read.csv(paste0(dir, "/data/2019/", "Step_sleep_mood_daily_2019_Q4.csv"), header = TRUE)
+
+
+#====================================================================
+# Data Cleaning & Preprocessing
+#====================================================================
+# colnames(selfreport_2018_2019)
+# get UserID of those with thought of killing themselves (as indicated by ssrs_wish = 1 (Yes); 2 (No)) at ANY quarter
+# ssrs_wish0 = baseline, ssrs_wish1 = Q1, ssrs_wish2 = Q2, ssrs_wish3 = Q3, ssrs_wish4 = Q4
+suicide_wish <- selfreport_2018_2019 %>%
+  select(UserID, starts_with("ssrs_wish")) %>%
+  filter(ssrs_wish0 == 1 | ssrs_wish1 == 1 | ssrs_wish2 == 1 | ssrs_wish3 == 1 | ssrs_wish4 == 1)
+
+# baseline
+c2018_daily_BL <- c2018_step_sleep_mood_daily_BL %>%
+  rename(UserID = STUDY_PRTCPT_ID, 
+          step = STEP_COUNT, 
+          sleep = SLEEP_COUNT,
+          mood = MOOD) %>% 
+  mutate(quarter = "BL") %>%
+  select(!ends_with("DATE"), !STUDY_ID)
+
+# Q1 and Q2
+# need to know the cut off of the Q1 (Jul, Aug, Sep) and Q2 (Oct, Nov, Dec)
+class(c2018_step_sleep_mood_daily_Q1Q2$METRIC_START_DATE)
+c2018_step_sleep_mood_daily_Q1Q2$METRIC_START_DATE <- as.Date(c2018_step_sleep_mood_daily_Q1Q2$METRIC_START_DATE, format = "%d-%b-%y")
+
+c2018_daily_Q1Q2 <- c2018_step_sleep_mood_daily_Q1Q2 %>%
+  rename(UserID = STUDY_PRTCPT_ID, 
+          step = STEP_COUNT, 
+          sleep = SLEEP_COUNT,
+          mood = MOOD) %>% 
+  mutate(month_start_numbers = format(METRIC_START_DATE, "%b"), 
+          quarter = ifelse(month_start_numbers %in% c("Jul", "Aug", "Sep"), "Q1", "Q2")) %>%
+  select(!ends_with("DATE"), !STUDY_ID)
+
+# Q3
+c2018_daily_Q3 <- c2018_step_sleep_mood_daily_Q3 %>%
+  rename(UserID = STUDY_PRTCPT_ID, 
+          step = STEP_COUNT, 
+          sleep = SLEEP_COUNT,
+          mood = MOOD) %>% 
+  mutate(quarter = "Q3") %>%
+  select(!ends_with("DATE"), !STUDY_ID)
+
+# Q4
+c2018_daily_Q4 <- c2018_step_sleep_mood_daily_Q4 %>%
+  rename(UserID = STUDY_PRTCPT_ID, 
+          step = STEP_COUNT, 
+          sleep = SLEEP_COUNT,
+          mood = MOOD) %>% 
+  mutate(quarter = "Q4")%>%
+  select(!ends_with("DATE"), !STUDY_ID)
+
+# 2018 - LONG DATA: merge *daily* 2018 data
+merge()
+
+# rename variables with timepoints at suffix
+c2019_step_sleep_mood_daily_BLQ1 <- c2019_step_sleep_mood_daily_BLQ1 %>%
+  rename_with(~ paste0(.x, "_BL"), matches("COUNT$|DATE$|MOOD$")) %>% 
+  rename(UserID = STUDY_PRTCPT_ID)
+
+# rename variables with timepoints at suffix
+# need to know the cut off of the Q1 and Q2
+# c2019_step_sleep_mood_daily_Q2 <- c2019_step_sleep_mood_daily_Q2 %>%
+#   rename_with(~ paste0(.x, "_Q2"), matches("COUNT$|DATE$|MOOD$")) %>% 
+#   rename(UserID = STUDY_PRTCPT_ID)
+
+# c2019_step_sleep_mood_daily_Q3 <- c2019_step_sleep_mood_daily_Q3 %>%
+#   rename_with(~ paste0(.x, "_Q3"), matches("COUNT$|DATE$|MOOD$")) %>% 
+#   rename(UserID = STUDY_PRTCPT_ID)
+
+# c2019_step_sleep_mood_daily_Q4 <- c2019_step_sleep_mood_daily_Q4 %>%
+#   rename_with(~ paste0(.x, "_Q4"), matches("COUNT$|DATE$|MOOD$")) %>% 
+#   rename(UserID = STUDY_PRTCPT_ID)
+
+```
+
