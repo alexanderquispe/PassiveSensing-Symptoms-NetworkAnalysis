@@ -25,6 +25,7 @@ if (!require(pkg, character.only = TRUE)){
 # self report: 2018 and 20919 baseline 
 selfreport_2018_2019 <- read.csv(paste0(dir, "/data/", "IHSdata_20182019_03062024.csv"), header = TRUE)
 
+
 # 2018: sensor (activity and sleep), self-report: baseline, Q1Q2, Q3, Q4
 c2018_step_sleep_mood_daily_BL <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_BL.csv"), header = TRUE)
 c2018_step_sleep_mood_daily_Q1Q2 <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_Q1Q2.csv"), header = TRUE)
@@ -60,6 +61,15 @@ ssrs_wish_summ <- ssrs_wish %>%
   group_by(Year, key, wish_dead) %>%
   summarise(n=n())  %>% 
   arrange(wish_dead)
+
+# get self-report data (this is combining 2018 and 2019)
+selfreport_wish <- selfreport_2018_2019 %>%
+  # filter(Year == 2018) %>%
+  filter(ssrs_wish1 == 1 | ssrs_wish2 == 1 | ssrs_wish3 == 1 | ssrs_wish4 == 1) %>%
+  select(UserID, Year, starts_with("ssrs_kill"), Age, Sex, Marital, Child, SigOther0, Ethnicity, starts_with("rotation"), starts_with("hours"), starts_with("daysoff"), starts_with("error"), Neu0, EFE0, depr0, deprTreat0, starts_with("specTreat"), starts_with("PHQtot"), starts_with("PHQ10above"), starts_with("SLE"), starts_with("ssrs")) 
+
+#export csv
+write.csv(as.data.frame(selfreport_wish), paste0(dir, "/data/clean_data/", "selfreport_wish", ".csv"))
   
 # Check number of UserID of those who answered "Yes" (1) to Q2 of C-SSRS questionnaire: 
 # "Have you actually had any thoughts about killing yourself?"
@@ -79,7 +89,29 @@ ssrs_kill_summ <- ssrs_kill%>%
   summarise(n=n())  %>% 
   arrange(thought_killing)
 
+# get self-report data (this is combining 2018 and 2019)
+selfreport_kill <- selfreport_2018_2019 %>%
+  # filter(Year == 2018) %>%
+  filter(ssrs_kill1 == 1 | ssrs_kill2 == 1 | ssrs_kill3 == 1 | ssrs_kill4 == 1) %>%
+  select(UserID, Year, starts_with("ssrs_kill"), Age, Sex, Marital, Child, SigOther0, Ethnicity, starts_with("rotation"), starts_with("hours"), starts_with("daysoff"), starts_with("error"), Neu0, EFE0, depr0, deprTreat0, starts_with("specTreat"), starts_with("PHQtot"), starts_with("PHQ10above"), starts_with("SLE"), starts_with("ssrs")) 
 
+# export csv
+write.csv(as.data.frame(selfreport_kill), paste0(dir, "/data/clean_data/", "selfreport_kill", ".csv"))
+
+# check if people in ssrs_kill is a subset of people in ssrs_wish
+wish_ids <- unique(ssrs_wish$participant_id)
+kill_ids <- unique(ssrs_kill$participant_id)
+
+# Check if all participants in `wide_data` are in `long_data`
+is_subset <- all(kill_ids %in% wish_ids)
+if (is_subset) {
+  print("All participants in the ssrs_kill dataset are in the ssrs_wish dataset.")
+} else {
+  print("Not all participants in the ssrs_kill dataset are in the ssrs_wish dataset.")
+}
+
+# only using ssrs variables from 1-4
+# do not include variables that aren not available for cohort in bot years 
 
 # ------ daily sensor data ------
 # baseline
@@ -132,17 +164,33 @@ c2018_daily_Q4 <- c2018_step_sleep_mood_daily_Q4 %>%
 
 # 2018 - LONG DATA: rbind *daily* 2018 datasets
 c2018_BL_Q1_Q2_Q3_Q4 <- rbind(c2018_daily_BL, c2018_daily_Q1Q2, c2018_daily_Q3, c2018_daily_Q4) %>% 
-  arrange(UserID, quarter)
+  arrange(UserID, quarter) %>%
+  mutate(Year = 2018) # add year label; so we can differentiate after rbinding participants from 2018 and 2019 datasets
 
 # 2019 datasets are clean! :) it has the same structure/format as the 2018 dataset I created above
 c2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2019_step_sleep_mood_daily_BLQ1, c2019_step_sleep_mood_daily_Q2, c2019_step_sleep_mood_daily_Q3, c2019_step_sleep_mood_daily_Q4) %>% 
-  arrange(UserID, quarter)
+  arrange(UserID, quarter)%>%
+  mutate(Year = 2019) # add year label; so we can differentiate after rbinding participants from 2018 and 2019 datasets
 
+# Rbind both 2018 and 2019 sensor dataset
+sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2018_BL_Q1_Q2_Q3_Q4, c2019_BL_Q1_Q2_Q3_Q4)
 
 # export clean data 
+# first, get IDs for filtering sensor data 
+ssrs_wish_ids <- selfreport_wish$UserID
+ssrs_kill_ids <- selfreport_kill$UserID
 
-c2018_BL_Q1_Q2_Q3_Q4
-c2019_BL_Q1_Q2_Q3_Q4
+# filtered sensor data (only including subjects with suicide wish or thought of killing themselves 
+clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- sensor_2018_2019_BL_Q1_Q2_Q3_Q4%>%
+  filter(UserID %in% ssrs_wish_ids)
+
+# check n in the resulting dataset
+unique_count <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  summarise(unique_users = n_distinct(UserID)) %>%
+  pull(unique_users)
+
+print(unique_count)
+write.csv(as.data.frame(c2018_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "sensor_2018_BL_Q1_Q2_Q3_Q4", ".csv"))
 
 ```
 
