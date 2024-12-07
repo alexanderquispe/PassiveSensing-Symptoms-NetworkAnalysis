@@ -175,6 +175,42 @@ c2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2019_step_sleep_mood_daily_BLQ1, c2019_step_sleep
 # Rbind both 2018 and 2019 sensor dataset
 sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2018_BL_Q1_Q2_Q3_Q4, c2019_BL_Q1_Q2_Q3_Q4)
 
+
+# ACTIVE  MINUTES: 
+c2018_active <- read.csv(paste0(dir, "/data/2018/", "All_Active_Minutes_2018.csv"), header = TRUE)
+class(c2018_active$date)
+c2018_active$date <- as.Date(c2018_active$date)
+c2018_active <- c2018_active %>%
+  mutate(Year = 2018, 
+        month = format(date, '%b'),
+        quarter = case_when(
+      month %in% c("Jan", "Feb", "Mar") ~ "Q3",
+      month %in% c("Apr", "May", "Jun") ~ "Q4",
+      month %in% c("Jul", "Aug", "Sep") ~ "Q1",
+      month %in% c("Oct", "Nov", "Dec") ~ "Q2",
+    TRUE ~ NA_character_  # Handles unexpected values
+  )) %>% 
+  select(-month)
+
+# 2019 ACTIVE MINUTES
+c2019_active <- read.csv(paste0(dir, "/data/2019/", "ActiveMinutes_2019_daily_all.csv"), header = TRUE)
+class(c2019_active$date)
+c2019_active$date <- as.Date(c2019_active$date)
+c2019_active <- c2019_active %>%
+  mutate(Year = 2019, 
+        month = format(date, '%b'),
+        quarter = case_when(
+      month %in% c("Jan", "Feb", "Mar") ~ "Q3",
+      month %in% c("Apr", "May", "Jun") ~ "Q4",
+      month %in% c("Jul", "Aug", "Sep") ~ "Q1",
+      month %in% c("Oct", "Nov", "Dec") ~ "Q2",
+    TRUE ~ NA_character_  # Handles unexpected values
+  )) %>% 
+  select(-month)
+
+c2018_2019_active <- rbind(c2018_active, c2019_active)
+
+
 # export clean data 
 # first, get IDs for filtering sensor data 
 ssrs_wish_ids <- selfreport_wish$UserID
@@ -190,7 +226,31 @@ unique_count <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
   pull(unique_users)
 
 print(unique_count)
+
+# merge sensor + active min data
+clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4$date <- as.Date(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4$date)
+clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- merge(
+  clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4, 
+  c2018_2019_active, 
+  by = c("UserID", "date", "Year", "quarter"), 
+  all.x = TRUE, 
+  all.y = FALSE
+)
+
+# check n in the resulting dataset
+unique_count <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  summarise(unique_users = n_distinct(UserID)) %>%
+  pull(unique_users)
+
+print(unique_count)
+
 write.csv(as.data.frame(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4", ".csv"))
+
+# summary per quarter
+clean_sensor_quarterly_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+filter((!step == 0 & !sleep == 0))
+colnames(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4)
+
 
 ```
 
