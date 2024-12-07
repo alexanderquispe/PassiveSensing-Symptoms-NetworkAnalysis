@@ -47,11 +47,12 @@ c2019_step_sleep_mood_daily_Q4 <- read.csv(paste0(dir, "/data/2019/", "Step_slee
 # Check number of UserID of those who answered "Yes" (1) to Q1 of C-SSRS questionnaire: 
 # "Have you wished you were dead or wished you could go to sleep and not wake up?"
 #  thought of killing themselves (as indicated by ssrs_wish = 1 (Yes); 2 (No)) at ANY quarter
-# ssrs_wish0 = baseline, ssrs_wish1 = Q1, ssrs_wish2 = Q2, ssrs_wish3 = Q3, ssrs_wish4 = Q4
+# ssrs_wish1 = Q1, ssrs_wish2 = Q2, ssrs_wish3 = Q3, ssrs_wish4 = Q4
 # NA/Invalid number = missing data, exclude that quarter
 ssrs_wish <- selfreport_2018_2019 %>%
-  select(UserID, Year, starts_with("ssrs_wish")) %>%
-  filter(ssrs_wish0 == 1 | ssrs_wish1 == 1 | ssrs_wish2 == 1 | ssrs_wish3 == 1 | ssrs_wish4 == 1) 
+  # filter(Year == 2019) %>%
+  select(UserID, Year, starts_with("ssrs_wish"), -ssrs_wish0) %>%
+  filter(ssrs_wish1 == 1 | ssrs_wish2 == 1 | ssrs_wish3 == 1 | ssrs_wish4 == 1) 
 # summary
 ssrs_wish_summ <- ssrs_wish %>%
   gather(key, value, -UserID, -Year) %>% 
@@ -60,14 +61,15 @@ ssrs_wish_summ <- ssrs_wish %>%
   summarise(n=n())  %>% 
   arrange(wish_dead)
   
-# Check number of UserID of those who answered "Yes" (1) to Q1 of C-SSRS questionnaire: 
+# Check number of UserID of those who answered "Yes" (1) to Q2 of C-SSRS questionnaire: 
 # "Have you actually had any thoughts about killing yourself?"
 #  thought of killing themselves (as indicated by ssrs_wish = 1 (Yes); 2 (No)) at ANY quarter
-# ssrs_wish0 = baseline, ssrs_wish1 = Q1, ssrs_wish2 = Q2, ssrs_wish3 = Q3, ssrs_wish4 = Q4
+# ssrs_kill1 = Q1, ssrs_kill2 = Q2, ssrs_kill3 = Q3, ssrs_kill4 = Q4
 # NA/Invalid number = missing data, exclude that quarter
 ssrs_kill <- selfreport_2018_2019 %>%
-  select(UserID, Year, starts_with("ssrs_kill")) %>%
-  filter(ssrs_kill0 == 1 | ssrs_kill1 == 1 | ssrs_kill2 == 1 | ssrs_kill3 == 1 | ssrs_kill4 == 1) 
+  filter(Year == 2018) %>%
+  select(UserID, Year, starts_with("ssrs_kill"),-ssrs_kill0) %>%
+  filter(ssrs_kill1 == 1 | ssrs_kill2 == 1 | ssrs_kill3 == 1 | ssrs_kill4 == 1) 
  
 # summary
 ssrs_kill_summ <- ssrs_kill%>%
@@ -76,6 +78,7 @@ ssrs_kill_summ <- ssrs_kill%>%
   group_by(Year, key, thought_killing) %>%
   summarise(n=n())  %>% 
   arrange(thought_killing)
+
 
 
 # ------ daily sensor data ------
@@ -137,6 +140,9 @@ c2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2019_step_sleep_mood_daily_BLQ1, c2019_step_sleep
 
 
 # export clean data 
+
+c2018_BL_Q1_Q2_Q3_Q4
+c2019_BL_Q1_Q2_Q3_Q4
 
 ```
 
