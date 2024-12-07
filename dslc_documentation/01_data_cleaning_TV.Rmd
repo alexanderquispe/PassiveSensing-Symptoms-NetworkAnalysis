@@ -190,7 +190,7 @@ unique_count <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
   pull(unique_users)
 
 print(unique_count)
-write.csv(as.data.frame(c2018_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "sensor_2018_BL_Q1_Q2_Q3_Q4", ".csv"))
+write.csv(as.data.frame(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4", ".csv"))
 
 ```
 
