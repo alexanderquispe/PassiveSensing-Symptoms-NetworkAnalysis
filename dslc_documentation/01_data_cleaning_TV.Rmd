@@ -210,12 +210,12 @@ c2019_active <- c2019_active %>%
 
 c2018_2019_active <- rbind(c2018_active, c2019_active)
 
-
 # export clean data 
 # first, get IDs for filtering sensor data 
 ssrs_wish_ids <- selfreport_wish$UserID
 ssrs_kill_ids <- selfreport_kill$UserID
 
+# ------ sensor data: ssrs_wish yes only ------
 # filtered sensor data (only including subjects with suicide wish or thought of killing themselves 
 clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- sensor_2018_2019_BL_Q1_Q2_Q3_Q4%>%
   filter(UserID %in% ssrs_wish_ids)
@@ -244,13 +244,139 @@ unique_count <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
 
 print(unique_count)
 
-write.csv(as.data.frame(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4", ".csv"))
+# write.csv(as.data.frame(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4), paste0(dir, "/data/clean_data/", "clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4", ".csv"))
 
 # summary per quarter
-clean_sensor_quarterly_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
-filter((!step == 0 & !sleep == 0))
-colnames(clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4)
+clean_sensor_all <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  filter(!quarter == "BL") %>% # exclude BL data
+  mutate(remove_nosensor = ifelse(step == 0 & sleep == 0, "Yes", "No")) %>% 
+  filter(remove_nosensor == "No") %>%
+  gather(key, value, -UserID, -quarter, -Year, -remove_nosensor,  -date) %>% 
+  group_by(UserID, Year, quarter, key) %>% 
+  summarize(n_sensordays = n(),
+            mean = round(mean(value, na.rm=TRUE), digits = 1),
+            sd = round(sd(value, na.rm=TRUE), digits = 1), 
+            se = round(sd(value, na.rm=TRUE)/sqrt(length(value)), digits = 1), 
+            median = round(median(value, na.rm=TRUE), digits = 1), 
+            IQR = round(IQR(value, na.rm=TRUE), digits = 1))
 
+summary(clean_sensor_all$n_sensordays[clean_sensor_all$quarter=="Q1" & clean_sensor_all$Year=="2018"])
+summary(clean_sensor_all$n_sensordays[clean_sensor_all$quarter=="Q2"])
+summary(clean_sensor_all$n_sensordays[clean_sensor_all$quarter=="Q3"])
+summary(clean_sensor_all$n_sensordays[clean_sensor_all$quarter=="Q4"])
+
+# check the distribution of number of days of sensor data among participant for each quarter 
+# facet wrap 
+hist_sensordays <- ggplot(clean_sensor_all, aes(x = n_sensordays)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~quarter*Year, ncol = 2) +
+  theme_minimal() +
+  labs(
+    title = "Histogram with Facet Wrap",
+    x = "Value",
+    y = "Frequency"
+  )
+hist_sensordays
+
+boxplot_sensordays <- ggplot(clean_sensor_all, aes(y = n_sensordays)) +
+  geom_boxplot(fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~quarter*Year, ncol = 2) +
+  theme_minimal() +
+  labs(
+    title = "Boxpolot with Facet Wrap"
+  )
+boxplot_sensordays
+
+# --- sensor data: all participants ---
+# merge sensor + active min data
+all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- sensor_2018_2019_BL_Q1_Q2_Q3_Q4
+all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4$date <- as.Date(sensor_2018_2019_BL_Q1_Q2_Q3_Q4$date)
+
+all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- merge(
+  all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4, 
+  c2018_2019_active, 
+  by = c("UserID", "date", "Year", "quarter"), 
+  all.x = TRUE, 
+  all.y = FALSE
+)
+
+all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4$quarter
+
+# summary per quarter
+sensor_all <- all_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  mutate(quarter = as.factor(case_when(
+        quarter %in% "Q3" ~ "3",
+        quarter %in% "Q4" ~ "4",
+        quarter %in% "Q1" ~ "1",
+        quarter %in% "Q2" ~ "2",
+      TRUE ~ NA_character_  # Handles unexpected values
+    ))) %>% 
+  filter(!quarter == "BL") %>% # exclude BL data
+  mutate(remove_nosensor = ifelse(step == 0 & sleep == 0, "Yes", "No")) %>% 
+  filter(remove_nosensor == "No") %>%
+  gather(key, value, -UserID, -quarter, -Year, -remove_nosensor,  -date) %>% 
+  group_by(UserID, Year, quarter, key) %>% 
+  summarize(n_sensordays = n(),
+            mean = round(mean(value, na.rm=TRUE), digits = 1),
+            sd = round(sd(value, na.rm=TRUE), digits = 1), 
+            se = round(sd(value, na.rm=TRUE)/sqrt(length(value)), digits = 1), 
+            median = round(median(value, na.rm=TRUE), digits = 1), 
+            IQR = round(IQR(value, na.rm=TRUE), digits = 1))
+
+summary(sensor_all$n_sensordays[sensor_all$quarter==1 & sensor_all$Year=="2018"])
+summary(sensor_all$n_sensordays[sensor_all$quarter==2])
+summary(sensor_all$n_sensordays[sensor_all$quarter==3])
+summary(sensor_all$n_sensordays[sensor_all$quarter==4])
+
+
+# check the distribution of number of days of sensor data among participant for each quarter 
+# facet wrap 
+hist_sensordays <- ggplot(sensor_all, aes(x = n_sensordays)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~quarter*Year, ncol = 2) +
+  theme_minimal() +
+  labs(
+    title = "ALL PARTICIPANTS: Histogram with Facet Wrap",
+    x = "Value",
+    y = "Frequency"
+  )
+hist_sensordays
+
+boxplot_sensordays <- ggplot(sensor_all, aes(y = n_sensordays)) +
+  geom_boxplot(fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~quarter*Year, ncol = 2) +
+  theme_minimal() +
+  labs(
+    title = "ALL PARTICIPANTS: Boxpolot with Facet Wrap"
+  )
+boxplot_sensordays
+
+
+# make wide data
+sensor_all_wide <- pivot_wider(sensor_all, names_from = key, values_from = c(n_sensordays, mean, sd, se, median, IQR))
+print(sensor_all_wide)
+colnames(sensor_all_wide)
+
+#export csv
+write.csv(as.data.frame(sensor_all_wide), paste0(dir, "/data/clean_data/", "sensor_all_wide", ".csv"))
+  
+
+# data_removed_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+#   # select(-step, -sleep, -actmin) %>% 
+#   # filter(!quarter == "BL") %>% 
+#   filter(!quarter == "BL") %>% # exclude BL data
+#   mutate(remove_nosensor = ifelse(step == 0 & sleep == 0, "Yes", "No")) %>% 
+#   gather(key, value, -UserID, -quarter, -Year, -remove_nosensor,  -date)%>%
+#   group_by(UserID, Year, quarter, remove_nosensor) %>% 
+#   reframe(n=n(), 
+#           mean = round(mean(value), digits = 1, na.rm = TRUE),
+#           sd = round(sd(value), digits = 1), 
+#           se = round(sd(value)/sqrt(length(value)), digits = 1), 
+#           median = round(median(value), digits = 1), 
+#           IQR = round(IQR(value), digits = 1))) 
+#   # filter(remove_nosensor == "Yes")          
+          
+ 
 
 ```
 
