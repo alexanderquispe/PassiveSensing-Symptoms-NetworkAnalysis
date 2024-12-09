@@ -361,20 +361,20 @@ colnames(sensor_all_wide)
 write.csv(as.data.frame(sensor_all_wide), paste0(dir, "/data/clean_data/", "sensor_all_wide", ".csv"))
   
 
-# data_removed_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
-#   # select(-step, -sleep, -actmin) %>% 
-#   # filter(!quarter == "BL") %>% 
-#   filter(!quarter == "BL") %>% # exclude BL data
-#   mutate(remove_nosensor = ifelse(step == 0 & sleep == 0, "Yes", "No")) %>% 
-#   gather(key, value, -UserID, -quarter, -Year, -remove_nosensor,  -date)%>%
-#   group_by(UserID, Year, quarter, remove_nosensor) %>% 
-#   reframe(n=n(), 
-#           mean = round(mean(value), digits = 1, na.rm = TRUE),
-#           sd = round(sd(value), digits = 1), 
-#           se = round(sd(value)/sqrt(length(value)), digits = 1), 
-#           median = round(median(value), digits = 1), 
-#           IQR = round(IQR(value), digits = 1))) 
-#   # filter(remove_nosensor == "Yes")          
+data_removed_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  # select(-step, -sleep, -actmin) %>% 
+  # filter(!quarter == "BL") %>% 
+  filter(!quarter == "BL") %>% # exclude BL data
+  mutate(remove_nosensor = ifelse(step == 0 & sleep == 0, "Yes", "No")) %>% 
+  gather(key, value, -UserID, -quarter, -Year, -remove_nosensor,  -date)%>%
+  group_by(UserID, Year, quarter, remove_nosensor) %>% 
+  reframe(n=n(), 
+          mean = round(mean(value), digits = 1, na.rm = TRUE),
+          sd = round(sd(value), digits = 1), 
+          se = round(sd(value)/sqrt(length(value)), digits = 1), 
+          median = round(median(value), digits = 1), 
+          IQR = round(IQR(value), digits = 1))) 
+  # filter(remove_nosensor == "Yes")          
           
  
 
