@@ -19,12 +19,17 @@ if (!require(pkg, character.only = TRUE)){
     }
 }
 
+```
+
+```{r data_cleaning, include=FALSE, echo=FALSE}
 #====================================================================
 # Load Data
 #====================================================================
 # self report: 2018 and 20919 baseline 
 selfreport_2018_2019 <- read.csv(paste0(dir, "/data/", "IHSdata_20182019_03062024.csv"), header = TRUE)
 
+length(colnames(selfreport_2018_2019))
+colnames(selfreport_2018_2019)
 
 # 2018: sensor (activity and sleep), self-report: baseline, Q1Q2, Q3, Q4
 c2018_step_sleep_mood_daily_BL <- read.csv(paste0(dir, "/data/2018/", "US_step_sleep_mood_daily_2018cohort_BL.csv"), header = TRUE)
@@ -377,6 +382,395 @@ data_removed_summary <- clean_sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
   # filter(remove_nosensor == "Yes")          
           
  
-
 ```
 
+
+```{r eda, include=FALSE, echo=FALSE}
+
+# get clean data from Alex
+clean_all_data <- read.csv(paste0(dir, "/data/", "clean_data/sensor_selfreported_clean.csv"), header = TRUE)
+clean_all_data$ssrs_wish <- as.factor(clean_all_data$ssrs_wish)
+clean_all_data <- clean_all_data %>%
+  filter(Year == 2018)
+
+
+# suicide ideation: ssrs_wish
+bar_ssrs_wish <- ggplot(clean_all_data, aes(x = as.factor(as.integer(ssrs_wish)), fill = ssrs_wish)) +
+  geom_bar(stat = "count", position = "dodge") + # Use stat = "identity" for bar plots with y-values
+  facet_wrap(~Year*quarter, ncol = 4) + # Correct the facet formula
+  theme_minimal() +
+  labs(
+    title = "Bar Graph of Suicide Ideation",
+    x = "Suicide Ideation", # Add a label for the x-axis
+    y = "count" # Add a label for the y-axis
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  scale_x_discrete(
+    labels = c(
+      "1" = "Yes",
+      "2" = "No")) + 
+  scale_fill_manual(
+    values = c("1" = "brown3", "2" = "cornflowerblue", "NA" = "grey"), # Set custom colors
+    labels = c("Yes", "No", NA)                # Adjust legend labels
+  )
+bar_ssrs_wish
+
+ggsave("bar_ssrs_wish_plot.png", plot = bar_ssrs_wish,width = 20, dpi = 300)
+
+
+# suicide ideation: ssrs_wish
+bar_ssrs_wish <- ggplot(clean_all_data, aes(x = as.factor(as.integer(ssrs_wish)), fill = ssrs_wish)) +
+  geom_bar(stat = "fill") + # Use stat = "identity" for bar plots with y-values
+  facet_wrap(~Year*quarter, ncol = 4) + # Correct the facet formula
+  theme_minimal() +
+  labs(
+    title = "Bar Graph of Suicide Ideation",
+    x = "Suicide Ideation", # Add a label for the x-axis
+    y = "count" # Add a label for the y-axis
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  scale_x_discrete(
+    labels = c(
+      "1" = "Yes",
+      "2" = "No")) + 
+  scale_fill_manual(
+    values = c("1" = "brown3", "2" = "cornflowerblue", "NA" = "grey"), # Set custom colors
+    labels = c("Yes", "No", NA)                # Adjust legend labels
+  )
+bar_ssrs_wish
+
+ggsave("bar_ssrs_wish_plot.png", plot = bar_ssrs_wish,width = 20, dpi = 300)
+
+
+# has child
+bar_ssrs_wish_child <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(x = as.factor(Child), fill = as.factor(ssrs_wish))) +
+  geom_bar(stat = "count", position = "dodge") + 
+  facet_wrap(~Year*quarter, ncol = 4) + # Correct the facet formula
+  theme_minimal() +
+  labs(
+    x = "Has Child (Yes/No)",
+    y = "count",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  scale_x_discrete(
+    labels = c(
+      "1" = "Yes",
+      "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+bar_ssrs_wish_child
+
+ggsave("bar_ssrs_wish_child_plot.png", plot = bar_ssrs_wish_child, width = 20, dpi = 300)
+
+
+# # has child - boxplot
+# boxplot_ssrs_wish_child <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(y = as.factor(Child), x = as.factor(ssrs_wish))) +
+#   geom_boxplot() + 
+#   facet_wrap(~Year*quarter, ncol = 4) + # Correct the facet formula
+#   theme_minimal() +
+#   labs(
+#     x = "Has Child (Yes/No)",
+#     y = "Proportion",
+#     fill = "Suicide Ideation",
+#   ) + 
+#   theme_bw()+ 
+#   theme(
+#       plot.title = element_text(face = "bold", size = 30),
+#       panel.background = element_rect(fill = "transparent"), # bg of the panel
+#       plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+#       panel.grid.major = element_blank(), # get rid of major grid
+#       panel.grid.minor = element_blank(), # get rid of minor grid
+#       legend.title = element_blank(),
+#       legend.text = element_text(face = "bold", size = 20),
+#       legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+#       legend.box.background = element_blank(), # get rid of legend panel bg
+#       axis.line = element_line(color="black", size=0.5),
+#       axis.title.x = element_text(face="bold", size=20), 
+#       axis.text.x = element_text(size=20, face = "bold", color = "black"),
+#       axis.title.y = element_text(face="bold", size=20), 
+#       axis.text.y = element_text(size=20, face = "bold", color = "black"),
+#       strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+# ) + 
+#   scale_x_discrete(
+#     labels = c(
+#       "1" = "Yes",
+#       "0" = "No")) + 
+#   scale_fill_manual(
+#     values = c("brown3", "cornflowerblue", "grey"),
+#     labels = c("Yes SI","No SI", "NA")
+#   )
+# boxplot_ssrs_wish_child
+
+
+# clean_all_data$PHQtot
+# PhQtot
+hist_ssrs_wish_phqtot <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(fill = as.factor(ssrs_wish), x = PHQtot)) +
+  geom_histogram(position = "dodge", bins = 30) +  # Replace geom_bar with geom_histogram and set bins
+  facet_wrap(~Year*quarter, ncol = 4) +  
+  theme_minimal() +
+  labs(
+    # x = "Frequency",
+    x = "Depression Severity (PHQ-9 score)",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  # scale_x_discrete(
+  #   labels = c(
+  #     "1" = "Yes",
+  #     "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+hist_ssrs_wish_phqtot
+
+ggsave("hist_ssrs_wish_phqtot.png", plot = hist_ssrs_wish_phqtot,width = 20, dpi = 300)
+
+# clean_all_data$daysoff
+
+# Work Hours
+hist_ssrs_wish_daysoff <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(fill = as.factor(ssrs_wish), x = daysoff)) +
+  geom_histogram(position = "dodge", bins = 30) +  # Replace geom_bar with geom_histogram and set bins
+  facet_wrap(~Year*quarter, ncol = 4) +  
+  theme_minimal() +
+  labs(
+    # x = "Frequency",
+    x = "Days Off in the Past Month",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  # scale_x_discrete(
+  #   labels = c(
+  #     "1" = "Yes",
+  #     "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+hist_ssrs_wish_daysoff
+
+ggsave("hist_ssrs_wish_daysoff.png", plot = hist_ssrs_wish_daysoff, width=20, dpi = 300)
+
+
+# Sensor: sleep, quarterly average
+hist_ssrs_wish_sensorsleep <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(fill = as.factor(ssrs_wish), x = mean_sleep/60)) +
+  geom_histogram(position = "dodge", bins = 30) +  # Replace geom_bar with geom_histogram and set bins
+  facet_wrap(~Year*quarter, ncol = 4) +  
+  theme_minimal() +
+  labs(
+    # x = "Frequency",
+    x = "Average, Sensor-based Sleep Duration (hours)",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  # scale_x_discrete(
+  #   labels = c(
+  #     "1" = "Yes",
+  #     "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+hist_ssrs_wish_sensorsleep
+
+ggsave("hist_ssrs_wish_sensorsleep.png", plot = hist_ssrs_wish_sensorsleep, width = 20, dpi = 300)
+
+
+max(clean_all_data$sleepAve[!is.na(clean_all_data$sleepAve)])
+
+# Sensor: sleep, quarterly average
+hist_ssrs_wish_reportedsleep <- ggplot(subset(clean_all_data, !is.na(ssrs_wish) & sleepAve <20), aes(fill = as.factor(ssrs_wish), x = sleepAve)) +
+  geom_histogram(position = "dodge") +  # Replace geom_bar with geom_histogram and set bins
+  facet_wrap(~Year*quarter, ncol = 4) +  
+  theme_minimal() +
+  labs(
+    # x = "Frequency",
+    x = "Average, Self-Reported Avg. Sleep Duration (hours)",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  # scale_x_discrete(
+  #   labels = c(
+  #     "1" = "Yes",
+  #     "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+hist_ssrs_wish_reportedsleep
+
+ggsave("hist_ssrs_wish_reportedsleep.png", plot = hist_ssrs_wish_reportedsleep, width = 20, dpi = 300)
+
+
+
+
+# mood rating, quarterly average
+hist_ssrs_wish_mood <- ggplot(subset(clean_all_data, !is.na(ssrs_wish)), aes(fill = as.factor(ssrs_wish), x = mean_mood)) +
+  geom_histogram(position = "dodge", bins = 30) +  # Replace geom_bar with geom_histogram and set bins
+  facet_wrap(~Year*quarter, ncol = 4) +  
+  theme_minimal() +
+  labs(
+    # x = "Frequency",
+    x = "Average Daily Mood Rating",
+    fill = "Suicide Ideation",
+  ) + 
+  theme_bw()+ 
+  theme(
+      plot.title = element_text(face = "bold", size = 30),
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      panel.grid.major = element_blank(), # get rid of major grid
+      panel.grid.minor = element_blank(), # get rid of minor grid
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 20),
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_blank(), # get rid of legend panel bg
+      axis.line = element_line(color="black", size=0.5),
+      axis.title.x = element_text(face="bold", size=20), 
+      axis.text.x = element_text(size=20, face = "bold", color = "black"),
+      axis.title.y = element_text(face="bold", size=20), 
+      axis.text.y = element_text(size=20, face = "bold", color = "black"),
+      strip.text = element_text(size = 20) # Adjust 'size' to increase label size
+) + 
+  # scale_x_discrete(
+  #   labels = c(
+  #     "1" = "Yes",
+  #     "0" = "No")) + 
+  scale_fill_manual(
+    values = c("brown3", "cornflowerblue", "grey"),
+    labels = c("Yes SI","No SI", "NA")
+  )
+hist_ssrs_wish_mood
+
+ggsave("hist_ssrs_wish_mood.png", plot = hist_ssrs_wish_mood, width = 20, dpi = 300)
+
+
+
+clean_all_data$PHQtot
+
+
+view(clean_all_data)
+
+```
