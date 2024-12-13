@@ -180,6 +180,12 @@ c2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2019_step_sleep_mood_daily_BLQ1, c2019_step_sleep
 # Rbind both 2018 and 2019 sensor dataset
 sensor_2018_2019_BL_Q1_Q2_Q3_Q4 <- rbind(c2018_BL_Q1_Q2_Q3_Q4, c2019_BL_Q1_Q2_Q3_Q4)
 
+length(unique(selfreport_2018_2019$UserID))
+
+# check how many have sleep and step counts == 0 
+missing_stepandsleep <- sensor_2018_2019_BL_Q1_Q2_Q3_Q4 %>%
+  filter(step==0 & sleep==0)
+
 
 # ACTIVE  MINUTES: 
 c2018_active <- read.csv(paste0(dir, "/data/2018/", "All_Active_Minutes_2018.csv"), header = TRUE)
