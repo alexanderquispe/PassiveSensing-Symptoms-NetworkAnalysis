@@ -2,11 +2,12 @@
 title: "Combining Passive Sensing and Self-Reported Symptoms with Network Analysis to Predict Suicidal Ideation in Medical Residents"
 output: github_document
 ---
+
 ## Setup
-```{r setup, include=FALSE, echo=FALSE}
+```{r setup, include=FALSE, echo=TRUE}
 # Set working directory
 # Please update this to your directory as needed
-dir <- "/Users/thaliaviranda/Documents/GitHub/PassiveSensing-Symptoms-NetworkAnalysis"
+dir <- "C:/Users/Alexander/Documents/GitHub/PassiveSensing-Symptoms-NetworkAnalysis"
 setwd(dir)
 
 # load packages
